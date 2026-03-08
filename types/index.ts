@@ -1,4 +1,12 @@
-export type ItemSource = 'manual' | 'share' | 'other'
+export interface UrlSummary {
+  title: string
+  description: string
+  image: string
+  siteName: string
+  mainText: string
+}
+
+export type ItemSource = 'manual' | 'share' | 'url' | 'other'
 export type ItemStatus = 'inbox' | 'archived'
 export type ActionStatus = 'proposed' | 'approved' | 'rejected' | 'merged'
 export type ApprovedStatus = 'active' | 'done' | 'snoozed'
@@ -12,6 +20,8 @@ export interface InboxItem {
   raw_text: string
   tags: string[] | null
   status: ItemStatus
+  url: string | null
+  url_summary: UrlSummary | null
 }
 
 export interface DigestRun {

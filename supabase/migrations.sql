@@ -13,15 +13,24 @@ CREATE TABLE public.inbox_items (
   id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id     UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  source      TEXT NOT NULL DEFAULT 'manual' CHECK (source IN ('manual', 'share', 'other')),
+  source      TEXT NOT NULL DEFAULT 'manual' CHECK (source IN ('manual', 'share', 'url', 'other')),
   raw_text    TEXT NOT NULL,
   tags        TEXT[] DEFAULT NULL,
-  status      TEXT NOT NULL DEFAULT 'inbox' CHECK (status IN ('inbox', 'archived'))
+  status      TEXT NOT NULL DEFAULT 'inbox' CHECK (status IN ('inbox', 'archived')),
+  url         TEXT DEFAULT NULL,
+  url_summary JSONB DEFAULT NULL
 );
 
 CREATE INDEX idx_inbox_items_user_id ON public.inbox_items(user_id);
 CREATE INDEX idx_inbox_items_created_at ON public.inbox_items(created_at);
 CREATE INDEX idx_inbox_items_status ON public.inbox_items(status);
+
+-- Migration: URL support for inbox items
+-- Run this if the table already exists:
+-- ALTER TABLE public.inbox_items ADD COLUMN IF NOT EXISTS url TEXT DEFAULT NULL;
+-- ALTER TABLE public.inbox_items ADD COLUMN IF NOT EXISTS url_summary JSONB DEFAULT NULL;
+-- ALTER TABLE public.inbox_items DROP CONSTRAINT IF EXISTS inbox_items_source_check;
+-- ALTER TABLE public.inbox_items ADD CONSTRAINT inbox_items_source_check CHECK (source IN ('manual', 'share', 'url', 'other'));
 
 -- ============================================================
 -- 2. digest_runs
