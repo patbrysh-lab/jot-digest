@@ -50,9 +50,13 @@ export default function ReviewPage() {
   useEffect(() => { load() }, [load])
 
   async function handleApprove(action: ProposedAction) {
+    const { data: { session } } = await supabase.auth.getSession()
     const res = await fetch('/api/actions/approve', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session?.access_token}`,
+      },
       body: JSON.stringify({ actionId: action.id }),
     })
     if (res.ok) {
