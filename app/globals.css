@@ -19,104 +19,163 @@ html {
 }
 
 body {
-  background-color: #0a0b14;
+  background-color: #080a12;
+  background-image:
+    radial-gradient(ellipse 120% 55% at 50% -5%, rgba(88, 28, 235, 0.2) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 25% at 95% 100%, rgba(13, 148, 136, 0.08) 0%, transparent 50%);
   color: #f8fafc;
   font-family: var(--font-body);
   min-height: 100vh;
+  overscroll-behavior: none;
+}
+
+/* Hide scrollbars globally for a native app feel */
+::-webkit-scrollbar { width: 0; height: 0; }
+
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
 }
 
 @layer components {
+
+  /* ─── Buttons ─── */
+
   .btn-primary {
-    @apply inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm
-           transition-all duration-150 active:scale-[0.98]
-           disabled:opacity-40 disabled:cursor-not-allowed;
-    background-color: #7c3aed;
-    color: #ffffff;
+    @apply inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm
+           transition-all duration-200 active:scale-[0.97]
+           disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none;
+    background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(124, 58, 237, 0.4), 0 1px 0 rgba(255,255,255,0.1) inset;
   }
 
   .btn-primary:hover:not(:disabled) {
-    background-color: #6d28d9;
+    background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+    box-shadow: 0 6px 24px rgba(124, 58, 237, 0.55), 0 1px 0 rgba(255,255,255,0.12) inset;
+    transform: translateY(-1px);
   }
 
   .btn-secondary {
-    @apply inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm
-           transition-all duration-150 active:scale-[0.98]
+    @apply inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium text-sm
+           transition-all duration-200 active:scale-[0.97]
            disabled:opacity-40 disabled:cursor-not-allowed;
-    background: transparent;
-    color: #cbd5e1;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: #94a3b8;
+    border: 1px solid rgba(255, 255, 255, 0.09);
   }
 
   .btn-secondary:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.09);
+    border-color: rgba(255, 255, 255, 0.15);
+    color: #cbd5e1;
   }
 
-  .btn-danger {
-    @apply inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm
-           transition-all duration-150 active:scale-[0.98];
-    color: #f87171;
-    background: rgba(239, 68, 68, 0.1);
-    border: 1px solid rgba(239, 68, 68, 0.2);
-  }
-
-  .btn-danger:hover {
-    background: rgba(239, 68, 68, 0.18);
-  }
-
-  .btn-success {
-    @apply inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm
-           transition-all duration-150 active:scale-[0.98];
-    color: #2dd4bf;
-    background: rgba(20, 184, 166, 0.1);
-    border: 1px solid rgba(20, 184, 166, 0.2);
-  }
-
-  .btn-success:hover {
-    background: rgba(20, 184, 166, 0.18);
-  }
+  /* ─── Glass card ─── */
 
   .card {
-    @apply rounded-xl;
-    background-color: #12141f;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5), 0 4px 20px rgba(0, 0, 0, 0.3);
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow:
+      0 4px 24px rgba(0, 0, 0, 0.4),
+      0 1px 0 rgba(255, 255, 255, 0.05) inset;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
   }
 
+  .card-hover:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.13);
+    box-shadow:
+      0 12px 40px rgba(0, 0, 0, 0.5),
+      0 1px 0 rgba(255, 255, 255, 0.07) inset;
+  }
+
+  /* ─── Inputs ─── */
+
   .input {
-    @apply w-full px-3 py-2.5 rounded-lg text-sm transition-all;
-    background-color: #0d0f1a;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    @apply w-full px-4 py-3 rounded-xl text-sm transition-all duration-200;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     color: #f1f5f9;
   }
 
   .input::placeholder {
-    color: #475569;
+    color: #2d3a4a;
   }
 
   .input:focus {
     @apply outline-none;
-    border-color: rgba(124, 58, 237, 0.5);
+    border-color: rgba(124, 58, 237, 0.6);
     box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
+    background: rgba(255, 255, 255, 0.06);
   }
+
+  /* ─── Pill badges ─── */
 
   .tag {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
-    background-color: rgba(255, 255, 255, 0.07);
-    color: #94a3b8;
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors;
+    background: rgba(255, 255, 255, 0.06);
+    color: #64748b;
+    border: 1px solid rgba(255, 255, 255, 0.07);
   }
 
+  /* ─── Floating nav links ─── */
+
   .nav-link {
-    @apply flex flex-col items-center gap-0.5 px-3 py-2 transition-colors duration-150;
-    color: #475569;
+    @apply flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-xs font-medium
+           transition-all duration-150 whitespace-nowrap;
+    color: #334155;
   }
 
   .nav-link:hover {
-    color: #94a3b8;
+    color: #64748b;
+    background: rgba(255, 255, 255, 0.05);
   }
 
   .nav-link.active {
-    color: #a78bfa;
+    color: #c4b5fd;
+    background: rgba(124, 58, 237, 0.2);
+  }
+
+  /* ─── Next step left-accent callout ─── */
+
+  .next-step-callout {
+    border-left: 2px solid rgba(139, 92, 246, 0.7);
+    background: rgba(139, 92, 246, 0.07);
+    border-radius: 0 10px 10px 0;
+    padding: 8px 12px;
+  }
+
+  /* ─── Segmented control ─── */
+
+  .seg-control {
+    display: flex;
+    align-items: center;
+    padding: 3px;
+    gap: 2px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+  }
+
+  .seg-btn {
+    @apply px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all duration-150;
+    color: #475569;
+  }
+
+  .seg-btn:hover {
+    color: #64748b;
+  }
+
+  .seg-btn.active {
+    background: rgba(124, 58, 237, 0.25);
+    color: #c4b5fd;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
   }
 }
