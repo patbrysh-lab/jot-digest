@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { createClient } from '@/lib/supabase-client'
 import { useSearchParams } from 'next/navigation'
 
@@ -11,15 +11,42 @@ interface Integration {
   created_at: string
 }
 
+/* useSearchParams must live inside a Suspense boundary */
+function FlashMessages() {
+  const searchParams = useSearchParams()
+  const justConnected = searchParams.get('connected') === '1'
+  const connectError  = searchParams.get('error')
+
+  if (!justConnected && !connectError) return null
+
+  return (
+    <>
+      {justConnected && (
+        <div
+          className="rounded-2xl px-4 py-3 mb-5 text-sm"
+          style={{ color: '#5eead4', background: 'rgba(20,184,166,0.1)', border: '1px solid rgba(20,184,166,0.2)' }}
+        >
+          Google Calendar connected successfully.
+        </div>
+      )}
+      {connectError && (
+        <div
+          className="rounded-2xl px-4 py-3 mb-5 text-sm"
+          style={{ color: '#fca5a5', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}
+        >
+          Connection failed: {connectError.replace(/_/g, ' ')}
+        </div>
+      )}
+    </>
+  )
+}
+
 export default function SettingsPage() {
   const [integration, setIntegration] = useState<Integration | null | undefined>(undefined)
   const [disconnecting, setDisconnecting] = useState(false)
   const [token, setToken] = useState<string | null>(null)
 
   const supabase = createClient()
-  const searchParams = useSearchParams()
-  const justConnected = searchParams.get('connected') === '1'
-  const connectError  = searchParams.get('error')
 
   useEffect(() => {
     async function load() {
@@ -66,34 +93,18 @@ export default function SettingsPage() {
         <p className="text-slate-500 text-sm mt-1.5">Connect external services to enhance your workflow.</p>
       </div>
 
-      {/* Flash messages */}
-      {justConnected && (
-        <div
-          className="rounded-2xl px-4 py-3 mb-5 text-sm"
-          style={{ color: '#5eead4', background: 'rgba(20,184,166,0.1)', border: '1px solid rgba(20,184,166,0.2)' }}
-        >
-          Google Calendar connected successfully.
-        </div>
-      )}
-      {connectError && (
-        <div
-          className="rounded-2xl px-4 py-3 mb-5 text-sm"
-          style={{ color: '#fca5a5', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}
-        >
-          Connection failed: {connectError.replace(/_/g, ' ')}
-        </div>
-      )}
+      {/* Flash messages — requires Suspense because of useSearchParams */}
+      <Suspense fallback={null}>
+        <FlashMessages />
+      </Suspense>
 
       {/* Google Calendar card */}
       <div className="card p-5">
         <div className="flex items-start gap-4">
-          {/* Google Calendar icon */}
+          {/* Icon */}
           <div
             className="shrink-0 w-11 h-11 rounded-2xl flex items-center justify-center"
-            style={{
-              background: 'rgba(96,165,250,0.1)',
-              border: '1px solid rgba(96,165,250,0.2)',
-            }}
+            style={{ background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.2)' }}
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
               <rect x="3" y="4" width="18" height="18" rx="2" stroke="#60a5fa" strokeWidth="1.5"/>
@@ -151,7 +162,7 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* What this enables */}
+        {/* Feature list when disconnected */}
         {!integration && !loading && (
           <div
             className="mt-4 pt-4 space-y-2"
@@ -170,7 +181,6 @@ export default function SettingsPage() {
         )}
       </div>
 
-      {/* Footer note */}
       <p className="text-[11px] text-slate-700 mt-6 text-center px-4 leading-relaxed">
         Jot Digest requests read-only calendar access. No events are created or modified.
       </p>
