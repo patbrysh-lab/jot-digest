@@ -27,6 +27,16 @@ const NAV = [
     ),
   },
   {
+    href: '/sprint',
+    label: 'Sprint',
+    icon: (a: boolean) => (
+      <svg className="w-4 h-4" fill={a ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={a ? 0 : 1.75}
+          d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+      </svg>
+    ),
+  },
+  {
     href: '/analyst',
     label: 'Analyst',
     icon: (a: boolean) => (
