@@ -3,21 +3,20 @@
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase-client'
 import type { Item, NextStep, ItemContext, ItemEffort } from '@/types'
-import { format } from 'date-fns'
 
 const CONTEXTS: ItemContext[] = ['work', 'personal', 'music', 'golf', 'travel', 'creative', 'unknown']
 const EFFORTS: Array<ItemEffort | 'none'> = ['quick', 'session', 'project', 'none']
 
-const EFFORT_BADGES: Record<string, { label: string; color: string }> = {
-  quick:   { label: 'Quick',    color: 'bg-green-100 text-green-700' },
-  session: { label: 'Session',  color: 'bg-blue-100 text-blue-700' },
-  project: { label: 'Project',  color: 'bg-purple-100 text-purple-700' },
-  none:    { label: 'No effort', color: 'bg-ink-100 text-ink-400' },
+const EFFORT_BADGES: Record<string, { label: string; color: string; bg: string; border: string }> = {
+  quick:   { label: 'Quick',     color: '#2dd4bf', bg: 'rgba(20,184,166,0.1)',  border: 'rgba(20,184,166,0.2)' },
+  session: { label: 'Session',   color: '#38bdf8', bg: 'rgba(56,189,248,0.1)',  border: 'rgba(56,189,248,0.2)' },
+  project: { label: 'Project',   color: '#a78bfa', bg: 'rgba(124,58,237,0.1)', border: 'rgba(124,58,237,0.22)' },
+  none:    { label: 'No effort', color: '#475569', bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.06)' },
 }
 
 const CONTEXT_ICONS: Record<string, string> = {
   work: '💼', personal: '🏠', music: '🎵', golf: '⛳',
-  travel: '✈️', creative: '🎨', unknown: '•',
+  travel: '✈️', creative: '🎨', unknown: '·',
 }
 
 type ItemWithSteps = Item & { next_steps: NextStep[] }
@@ -57,7 +56,6 @@ export default function TasksPage() {
     setItems(prev => prev.filter(i => i.id !== id))
   }
 
-  // Group by context → effort
   const grouped = CONTEXTS.reduce((acc, ctx) => {
     const ctxItems = items.filter(i => i.context === ctx)
     if (ctxItems.length === 0) return acc
@@ -79,72 +77,81 @@ export default function TasksPage() {
   return (
     <div className="px-4 pt-6 pb-4">
       <div className="mb-6">
-        <h1 className="font-display text-2xl font-semibold text-ink-900">Tasks</h1>
-        <p className="text-ink-400 text-sm mt-0.5">{activeCount} active</p>
+        <h1 className="text-2xl font-bold text-slate-50 tracking-tight">Tasks</h1>
+        <p className="text-slate-500 text-sm mt-0.5">{activeCount} active</p>
       </div>
 
-      <div className="flex gap-2 mb-5">
+      <div className="flex gap-2 mb-6">
         <button
           onClick={() => setShowDone(false)}
-          className={`tag cursor-pointer ${!showDone ? 'bg-ink-800 text-white' : 'hover:bg-ink-200'}`}
+          className="tag cursor-pointer transition-all"
+          style={!showDone ? { background: '#7c3aed', color: 'white', borderColor: '#7c3aed' } : {}}
         >
           Active
         </button>
         <button
           onClick={() => setShowDone(true)}
-          className={`tag cursor-pointer ${showDone ? 'bg-ink-800 text-white' : 'hover:bg-ink-200'}`}
+          className="tag cursor-pointer transition-all"
+          style={showDone ? { background: '#7c3aed', color: 'white', borderColor: '#7c3aed' } : {}}
         >
           + Done
         </button>
       </div>
 
       {loading ? (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {[1, 2, 3].map(i => (
             <div key={i} className="card p-4 animate-pulse">
-              <div className="h-4 bg-ink-100 rounded w-3/4 mb-2" />
-              <div className="h-3 bg-ink-50 rounded w-1/2" />
+              <div className="h-4 rounded w-3/4 mb-2" style={{ background: 'rgba(255,255,255,0.06)' }} />
+              <div className="h-3 rounded w-1/2" style={{ background: 'rgba(255,255,255,0.04)' }} />
             </div>
           ))}
         </div>
       ) : Object.keys(grouped).length === 0 ? (
         <div className="text-center py-16">
-          <div className="text-4xl mb-3">✅</div>
-          <p className="text-ink-400 text-sm">No items here. Capture something first.</p>
+          <p className="text-slate-500 text-sm">No items here. Capture something first.</p>
         </div>
       ) : (
-        <div className="space-y-8">
+        <div className="space-y-8 animate-fade-in">
           {CONTEXTS.filter(ctx => grouped[ctx]).map(ctx => (
             <div key={ctx}>
-              <div className="flex items-center gap-2 mb-3">
+              {/* Context header */}
+              <div className="flex items-center gap-2 mb-4">
                 <span className="text-base">{CONTEXT_ICONS[ctx]}</span>
-                <h2 className="font-display text-lg font-semibold text-ink-800 capitalize">{ctx}</h2>
-                <span className="text-xs text-ink-300">
+                <h2 className="text-base font-semibold text-slate-200 tracking-tight capitalize">{ctx}</h2>
+                <span className="text-xs text-slate-600">
                   {Object.values(grouped[ctx]).flat().length}
                 </span>
               </div>
 
               <div className="space-y-5">
-                {EFFORTS.filter(effort => grouped[ctx][effort]).map(effort => (
-                  <div key={effort}>
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className={`text-[10px] font-medium rounded px-1.5 py-0.5 ${EFFORT_BADGES[effort].color}`}>
-                        {EFFORT_BADGES[effort].label}
-                      </span>
-                      <div className="flex-1 h-px bg-ink-100" />
+                {EFFORTS.filter(effort => grouped[ctx][effort]).map(effort => {
+                  const eb = EFFORT_BADGES[effort]
+                  return (
+                    <div key={effort}>
+                      {/* Effort sub-header */}
+                      <div className="flex items-center gap-2 mb-2.5">
+                        <span
+                          className="text-[10px] font-medium rounded-full px-2 py-0.5"
+                          style={{ color: eb.color, background: eb.bg, border: `1px solid ${eb.border}` }}
+                        >
+                          {eb.label}
+                        </span>
+                        <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.05)' }} />
+                      </div>
+                      <div className="space-y-2">
+                        {grouped[ctx][effort].map(item => (
+                          <TaskCard
+                            key={item.id}
+                            item={item}
+                            onDone={markDone}
+                            onArchive={markArchived}
+                          />
+                        ))}
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      {grouped[ctx][effort].map(item => (
-                        <TaskCard
-                          key={item.id}
-                          item={item}
-                          onDone={markDone}
-                          onArchive={markArchived}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           ))}
@@ -174,16 +181,21 @@ function TaskCard({
   const isLong = displayText.length > 100
 
   return (
-    <div className={`card p-4 transition-all ${isDone ? 'opacity-50' : 'hover:shadow-md'}`}>
+    <div
+      className="card p-4 transition-all"
+      style={isDone ? { opacity: 0.45 } : undefined}
+    >
       <div className="flex items-start gap-3">
         {/* Done toggle */}
         <button
           onClick={() => !isDone && onDone(item.id)}
-          className={`shrink-0 mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
-            isDone
-              ? 'bg-sage-500 border-sage-500'
-              : 'border-ink-300 hover:border-sage-500'
-          }`}
+          className="shrink-0 mt-0.5 w-5 h-5 rounded-full flex items-center justify-center transition-all"
+          style={isDone
+            ? { background: '#14b8a6', border: '2px solid #14b8a6' }
+            : { background: 'transparent', border: '2px solid rgba(255,255,255,0.2)' }
+          }
+          onMouseEnter={e => { if (!isDone) (e.currentTarget as HTMLElement).style.borderColor = '#14b8a6' }}
+          onMouseLeave={e => { if (!isDone) (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.2)' }}
         >
           {isDone && (
             <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -193,51 +205,65 @@ function TaskCard({
         </button>
 
         <div className="flex-1 min-w-0">
-          <p className={`text-sm text-ink-800 leading-relaxed break-words ${isDone ? 'line-through text-ink-400' : ''}`}>
+          <p
+            className="text-sm leading-relaxed break-words"
+            style={{ color: isDone ? '#475569' : '#e2e8f0', textDecoration: isDone ? 'line-through' : 'none' }}
+          >
             {isLong && !expanded ? displayText.slice(0, 100) + '…' : displayText}
           </p>
           {isLong && (
-            <button onClick={() => setExpanded(!expanded)} className="text-xs text-amber-600 mt-0.5">
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="text-xs text-violet-400 hover:text-violet-300 mt-0.5 transition-colors"
+            >
               {expanded ? 'Show less' : 'Show more'}
             </button>
           )}
 
           {/* Next step */}
           {activeStep && !isDone && (
-            <div className="mt-2 flex items-start gap-1.5 bg-amber-50 border border-amber-100 rounded-lg px-2.5 py-2">
-              <svg className="w-3 h-3 text-amber-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div
+              className="mt-2 flex items-start gap-1.5 rounded-lg px-2.5 py-2"
+              style={{ background: 'rgba(124,58,237,0.08)', border: '1px solid rgba(124,58,237,0.18)' }}
+            >
+              <svg className="w-3 h-3 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: '#8b5cf6' }}>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 010 1.972l-11.54 6.347a1.125 1.125 0 01-1.667-.986V5.653z" />
               </svg>
-              <p className="text-xs text-amber-800 leading-snug">{activeStep.text}</p>
+              <p className="text-xs leading-snug" style={{ color: '#c4b5fd' }}>{activeStep.text}</p>
             </div>
           )}
 
           {/* Scores + meta */}
           <div className="flex items-center gap-3 mt-2 flex-wrap">
             {item.importance != null && (
-              <span className="text-[10px] text-ink-400">
-                imp <span className="font-semibold text-ink-600">{item.importance}/5</span>
+              <span className="text-[10px] text-slate-600">
+                imp <span className="font-semibold text-slate-400">{item.importance}/5</span>
               </span>
             )}
             {item.time_sensitivity != null && (
-              <span className="text-[10px] text-ink-400">
-                urgency <span className="font-semibold text-ink-600">{item.time_sensitivity}/5</span>
+              <span className="text-[10px] text-slate-600">
+                urgency <span className="font-semibold text-slate-400">{item.time_sensitivity}/5</span>
               </span>
             )}
             {item.avoidance_score != null && (
-              <span className="text-[10px] text-ink-400">
-                avoid <span className="font-semibold text-ink-600">{item.avoidance_score}/10</span>
+              <span className="text-[10px] text-slate-600">
+                avoid <span className="font-semibold text-slate-400">{item.avoidance_score}/10</span>
               </span>
             )}
             {item.horizon && (
-              <span className="text-[10px] bg-ink-50 text-ink-400 rounded px-1.5 py-0.5">{item.horizon}</span>
+              <span
+                className="text-[10px] rounded-full px-1.5 py-0.5"
+                style={{ color: '#64748b', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.04)' }}
+              >
+                {item.horizon}
+              </span>
             )}
             {item.url && (
               <a
                 href={item.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[11px] text-amber-600 hover:text-amber-700 hover:underline"
+                className="text-[11px] text-violet-400 hover:text-violet-300 transition-colors"
                 onClick={e => e.stopPropagation()}
               >
                 Open ↗
@@ -247,8 +273,11 @@ function TaskCard({
         </div>
 
         <button
+          className="shrink-0 p-1.5 rounded-lg transition-colors"
           onClick={() => onArchive(item.id)}
-          className="shrink-0 p-1.5 rounded-lg text-ink-300 hover:text-ink-600 hover:bg-ink-50 transition-colors"
+          style={{ color: '#334155' }}
+          onMouseEnter={e => (e.currentTarget.style.color = '#64748b')}
+          onMouseLeave={e => (e.currentTarget.style.color = '#334155')}
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m8.25 3v6.75m0 0l-3-3m3 3l3-3M3.75 7.5h16.5M8.25 7.5l.75-4.5h6l.75 4.5" />

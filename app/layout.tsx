@@ -3,7 +3,7 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: 'Jot Digest',
-  description: 'Your cloud-synced idea inbox with AI digest',
+  description: 'Capture everything. Distill what matters.',
   viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
 }
 

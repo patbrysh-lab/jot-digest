@@ -25,7 +25,7 @@ export default function AuthPage() {
       if (error) {
         setError(error.message)
       } else {
-        window.location.href = '/inbox'
+        window.location.href = '/capture'
       }
     } else {
       const { error } = await supabase.auth.signUp({ email, password })
@@ -40,25 +40,33 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12">
-      {/* Logo / Brand */}
+      {/* Logo */}
       <div className="mb-10 text-center">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-ink-900 mb-4">
-          <svg className="w-6 h-6 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div
+          className="inline-flex items-center justify-center w-12 h-12 rounded-2xl mb-4"
+          style={{
+            background: 'rgba(124, 58, 237, 0.15)',
+            border: '1px solid rgba(124, 58, 237, 0.25)',
+          }}
+        >
+          <svg className="w-6 h-6 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
           </svg>
         </div>
-        <h1 className="font-display text-3xl font-semibold text-ink-900">Jot Digest</h1>
-        <p className="text-ink-400 mt-1 text-sm">Capture everything. Distill what matters.</p>
+        <h1 className="text-3xl font-bold text-slate-50 tracking-tight">Jot Digest</h1>
+        <p className="text-slate-500 mt-1.5 text-sm">Capture everything. Distill what matters.</p>
       </div>
 
       <div className="w-full max-w-sm card p-6">
-        <h2 className="font-display text-lg font-semibold text-ink-800 mb-6">
+        <h2 className="text-lg font-semibold text-slate-100 mb-6">
           {mode === 'sign-in' ? 'Welcome back' : 'Create account'}
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-ink-500 mb-1.5 uppercase tracking-wide">Email</label>
+            <label className="block text-xs font-medium text-slate-500 mb-1.5 uppercase tracking-wide">
+              Email
+            </label>
             <input
               type="email"
               value={email}
@@ -69,7 +77,9 @@ export default function AuthPage() {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-ink-500 mb-1.5 uppercase tracking-wide">Password</label>
+            <label className="block text-xs font-medium text-slate-500 mb-1.5 uppercase tracking-wide">
+              Password
+            </label>
             <input
               type="password"
               value={password}
@@ -82,25 +92,39 @@ export default function AuthPage() {
           </div>
 
           {error && (
-            <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+            <div
+              className="text-sm text-red-400 rounded-lg px-3 py-2.5"
+              style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)' }}
+            >
               {error}
             </div>
           )}
           {message && (
-            <div className="text-sm text-sage-700 bg-sage-50 border border-sage-200 rounded-lg px-3 py-2">
+            <div
+              className="text-sm text-teal-400 rounded-lg px-3 py-2.5"
+              style={{ background: 'rgba(20, 184, 166, 0.1)', border: '1px solid rgba(20, 184, 166, 0.2)' }}
+            >
               {message}
             </div>
           )}
 
-          <button type="submit" disabled={loading} className="btn-primary w-full justify-center">
-            {loading ? 'Loading...' : mode === 'sign-in' ? 'Sign in' : 'Create account'}
+          <button type="submit" disabled={loading} className="btn-primary w-full justify-center py-3">
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                </svg>
+                Loading…
+              </span>
+            ) : mode === 'sign-in' ? 'Sign in' : 'Create account'}
           </button>
         </form>
 
-        <div className="mt-5 text-center">
+        <div className="mt-5 pt-5 text-center" style={{ borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
           <button
             onClick={() => { setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in'); setError(''); setMessage('') }}
-            className="text-sm text-ink-500 hover:text-ink-800 transition-colors"
+            className="text-sm text-slate-500 hover:text-slate-300 transition-colors"
           >
             {mode === 'sign-in' ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
           </button>
