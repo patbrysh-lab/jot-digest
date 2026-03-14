@@ -1,80 +1,77 @@
 import Anthropic from '@anthropic-ai/sdk'
-import type { InboxItem, DigestOutput } from '@/types'
+import type { EnrichmentOutput, Item } from '@/types'
 
-const SYSTEM_PROMPT = `You are a productivity assistant that processes raw idea dumps and notes into structured action items and project clusters.
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+
+export const MODEL_VERSION = 'claude-sonnet-4-6'
+
+const ENRICHMENT_SYSTEM = `You are an intelligent assistant that classifies and enriches captured notes, tasks, ideas, and URLs.
+
+Analyze the given item and return a JSON object with exactly these fields:
+
+- item_type: task | curiosity | content | event | idea | reference | catch_all
+  task = something to do; curiosity = question/thing to look up; content = media to consume;
+  event = time-bound occasion; idea = concept to develop; reference = info to save; catch_all = other
+
+- context: work | personal | music | golf | travel | creative | unknown
+  Infer from content. Default to "unknown" when genuinely unclear.
+
+- effort: quick | session | project | null
+  quick = <30 min; session = 30min–2hr; project = multi-session; null if non-task
+
+- horizon: active | later | someday
+  active = this week; later = next few weeks; someday = no timeline
+
+- curiosity_score: 1–5 (how intellectually interesting)
+- actionability_score: 1–5 (how clear and immediately actionable)
+- time_sensitivity: 1–5 (how urgent or time-dependent)
+- importance: 1–5 (how significant to goals or wellbeing)
+- avoidance_score: 0–10 (0 = easy to start, 10 = highly likely to procrastinate)
+
+- next_step: object with:
+  - text: concrete, specific next action (1–2 sentences, immediately actionable)
+  - type: action | explore | consume | develop | none
+  - expires_in_days: number or null
+
+- entities: array of { entity_type: person|place|company|artist|topic|brand, entity_value: string }
+  Only include clearly identifiable entities. Empty array is fine.
+
+- reasoning: 1-sentence explanation of your classification
 
 Rules:
-- Never invent commitments or deadlines. Only extract explicit ones mentioned in the text.
-- Keep tone concise and practical.
-- Consolidate related ideas into single actions.
-- Confidence score (0-1) reflects how clear/actionable the item is.
-- Only include items as actions if they are genuinely actionable tasks.
-- Ideas, observations, and reflections should stay as notes.
-- Output ONLY valid JSON. No markdown, no explanation.`
+- Be decisive. Use the full score range — not everything is a 3.
+- Return ONLY valid JSON. No markdown fences, no explanation outside the JSON.`
 
-const USER_PROMPT = (items: InboxItem[]) => `Process these inbox items into a digest. Each item has an id and raw_text.
-
-Items:
-${items.map(i => `[${i.id}] (${new Date(i.created_at).toLocaleDateString()}): ${i.raw_text}`).join('\n')}
-
-Return JSON in exactly this schema:
-{
-  "proposed_actions": [
-    {
-      "title": "Short, clear action title",
-      "details": "More context if needed (can be empty string)",
-      "confidence": 0.85,
-      "derived_from": ["item-uuid-1", "item-uuid-2"]
+export async function enrichItem(item: Item): Promise<EnrichmentOutput> {
+  let content = ''
+  if (item.raw_text) content += `Text: ${item.raw_text}\n`
+  if (item.url) {
+    content += `URL: ${item.url}\n`
+    if (item.url_summary) {
+      const s = item.url_summary
+      if (s.title) content += `Title: ${s.title}\n`
+      if (s.description) content += `Description: ${s.description}\n`
+      if (s.siteName) content += `Site: ${s.siteName}\n`
+      if (s.mainText) content += `Excerpt: ${s.mainText.slice(0, 800)}\n`
     }
-  ],
-  "proposed_projects": [
-    {
-      "name": "Project name",
-      "summary": "What this project is about",
-      "related_action_indices": [0, 1]
-    }
-  ],
-  "remaining_notes": [
-    {
-      "text": "Original or lightly cleaned text",
-      "original_id": "item-uuid"
-    }
-  ]
-}`
-
-export async function runDigest(items: InboxItem[]): Promise<DigestOutput> {
-  const client = new Anthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY!,
-  })
-
-  const message = await client.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 4096,
-    system: SYSTEM_PROMPT,
-    messages: [
-      {
-        role: 'user',
-        content: USER_PROMPT(items),
-      },
-    ],
-  })
-
-  const content = message.content[0]
-  if (content.type !== 'text') {
-    throw new Error('Unexpected response type from Claude')
   }
 
-  // Strip any accidental markdown fences
-  const jsonText = content.text.replace(/```json\n?|```\n?/g, '').trim()
-  
-  let parsed: DigestOutput
+  const response = await anthropic.messages.create({
+    model: MODEL_VERSION,
+    max_tokens: 1024,
+    system: ENRICHMENT_SYSTEM,
+    messages: [{ role: 'user', content: content.trim() }],
+  })
+
+  const text = response.content[0].type === 'text' ? response.content[0].text : ''
+  const cleaned = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim()
+
+  let parsed: EnrichmentOutput
   try {
-    parsed = JSON.parse(jsonText)
-  } catch (e) {
-    throw new Error(`Failed to parse Claude response as JSON: ${jsonText.substring(0, 200)}`)
+    parsed = JSON.parse(cleaned)
+  } catch {
+    throw new Error(`Failed to parse Claude response: ${cleaned.slice(0, 200)}`)
   }
 
   return parsed
 }
-
-export const MODEL_VERSION = 'claude-sonnet-4-20250514'

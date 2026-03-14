@@ -1,3 +1,20 @@
+export type ItemType = 'task' | 'curiosity' | 'content' | 'event' | 'idea' | 'reference' | 'catch_all'
+export type ItemContext = 'work' | 'personal' | 'music' | 'golf' | 'travel' | 'creative' | 'unknown'
+export type ItemState = 'captured' | 'triaged' | 'ready' | 'in_progress' | 'done' | 'archived'
+export type ItemEffort = 'quick' | 'session' | 'project'
+export type ItemHorizon = 'active' | 'later' | 'someday'
+export type ItemSource = 'manual' | 'url' | 'share' | 'voice' | 'screenshot'
+export type EntityType = 'person' | 'place' | 'company' | 'artist' | 'topic' | 'brand'
+export type NextStepStatus = 'active' | 'expired' | 'completed' | 'dismissed'
+export type NextStepType = 'action' | 'explore' | 'consume' | 'develop' | 'none'
+export type ItemRelationship =
+  | 'related_to'
+  | 'duplicate_of'
+  | 'part_of_same_project'
+  | 'followup_to'
+  | 'same_entity_cluster'
+  | 'inspired_by'
+
 export interface UrlSummary {
   title: string
   description: string
@@ -6,87 +23,92 @@ export interface UrlSummary {
   mainText: string
 }
 
-export type ItemSource = 'manual' | 'share' | 'url' | 'other'
-export type ItemStatus = 'inbox' | 'archived'
-export type ActionStatus = 'proposed' | 'approved' | 'rejected' | 'merged'
-export type ApprovedStatus = 'active' | 'done' | 'snoozed'
-export type Priority = 'low' | 'med' | 'high'
-
-export interface InboxItem {
+export interface Item {
   id: string
   user_id: string
-  created_at: string
-  source: ItemSource
-  raw_text: string
-  tags: string[] | null
-  status: ItemStatus
+  raw_text: string | null
   url: string | null
+  item_type: ItemType | null
+  context: ItemContext
+  state: ItemState
+  effort: ItemEffort | null
+  horizon: ItemHorizon | null
+  curiosity_score: number | null
+  actionability_score: number | null
+  time_sensitivity: number | null
+  importance: number | null
+  avoidance_score: number | null
   url_summary: UrlSummary | null
-}
-
-export interface DigestRun {
-  id: string
-  user_id: string
+  source: ItemSource
   created_at: string
-  range_start: string
-  range_end: string
-  model_version: string
-  output_json: DigestOutput
+  updated_at: string
 }
 
-export interface DigestOutput {
-  proposed_actions: ProposedActionData[]
-  proposed_projects: ProposedProjectData[]
-  remaining_notes: RemainingNote[]
+export interface ItemEnrichment {
+  id: string
+  item_id: string
+  enriched_at: string
+  model_version: string | null
+  raw_output: Record<string, unknown> | null
 }
 
-export interface ProposedActionData {
-  title: string
-  details: string
-  confidence: number
-  derived_from: string[]
+export interface ItemEntity {
+  id: string
+  item_id: string
+  entity_type: EntityType
+  entity_value: string
 }
 
-export interface ProposedProjectData {
-  name: string
-  summary: string
-  related_action_indices: number[]
-}
-
-export interface RemainingNote {
+export interface NextStep {
+  id: string
+  item_id: string
   text: string
-  original_id: string
+  generated_at: string
+  expires_at: string | null
+  status: NextStepStatus
+  type: NextStepType
 }
 
-export interface ProposedAction {
+export interface StateHistory {
   id: string
-  digest_run_id: string
-  user_id: string
-  title: string
-  details: string
-  confidence: number
-  derived_from: string[]
-  status: ActionStatus
+  item_id: string
+  from_state: string | null
+  to_state: string
+  changed_at: string
+  changed_by: string | null
 }
 
-export interface ProposedProject {
+export interface ItemLink {
   id: string
-  digest_run_id: string
-  user_id: string
-  name: string
-  summary: string
-  related_actions: string[]
+  item_a_id: string
+  item_b_id: string
+  relationship: ItemRelationship
+  created_by: string | null
 }
 
-export interface ApprovedAction {
-  id: string
-  user_id: string
-  created_at: string
-  title: string
-  details: string
-  priority: Priority
-  due_date: string | null
-  status: ApprovedStatus
-  source_digest_run_id: string | null
-  source_inbox_item_ids: string[]
+export interface EnrichmentOutput {
+  item_type: ItemType
+  context: ItemContext
+  effort: ItemEffort | null
+  horizon: ItemHorizon
+  curiosity_score: number
+  actionability_score: number
+  time_sensitivity: number
+  importance: number
+  avoidance_score: number
+  next_step: {
+    text: string
+    type: NextStepType
+    expires_in_days: number | null
+  }
+  entities: Array<{
+    entity_type: EntityType
+    entity_value: string
+  }>
+  reasoning: string
+}
+
+export interface ItemWithRelations extends Item {
+  next_steps?: NextStep[]
+  item_entities?: ItemEntity[]
 }
