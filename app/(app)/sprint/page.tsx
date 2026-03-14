@@ -348,7 +348,33 @@ export default function SprintPage() {
    Pick screen
 ═══════════════════════════════════════════════════════════════════════════ */
 
+type CalWindow = { available: boolean; label: string | null }
+type CalData = {
+  connected: boolean
+  connectedEmail?: string
+  windows: Record<string, CalWindow> | null
+}
+
+const DUR_TO_MINS: Record<Duration, number> = { '15': 15, '30': 30, '60': 60, '120': 120 }
+
 function PickScreen({ onPick }: { onPick: (d: Duration) => void }) {
+  const [cal, setCal] = useState<CalData | null>(null)
+  const supabase = createClient()
+
+  useEffect(() => {
+    async function fetchCal() {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+      try {
+        const res = await fetch('/api/calendar/free-busy', {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        })
+        if (res.ok) setCal(await res.json())
+      } catch { /* non-critical */ }
+    }
+    fetchCal()
+  }, [])
+
   return (
     <div className="px-4 pt-8 pb-4">
       <div className="mb-10">
@@ -360,17 +386,50 @@ function PickScreen({ onPick }: { onPick: (d: Duration) => void }) {
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        {(Object.entries(DURATION_CONFIG) as [Duration, typeof DURATION_CONFIG[Duration]][]).map(([key, cfg]) => (
-          <button
-            key={key}
-            onClick={() => onPick(key)}
-            className="card card-hover p-5 text-left flex flex-col gap-1 transition-all duration-200 active:scale-[0.97]"
-          >
-            <span className="text-xl font-bold text-slate-50 tracking-tight">{cfg.label}</span>
-            <span className="text-xs text-slate-500">{cfg.sublabel}</span>
-          </button>
-        ))}
+        {(Object.entries(DURATION_CONFIG) as [Duration, typeof DURATION_CONFIG[Duration]][]).map(([key, cfg]) => {
+          const mins = DUR_TO_MINS[key]
+          const win  = cal?.connected && cal.windows ? cal.windows[mins] : null
+          return (
+            <button
+              key={key}
+              onClick={() => onPick(key)}
+              className="card card-hover p-5 text-left flex flex-col gap-1 transition-all duration-200 active:scale-[0.97]"
+            >
+              <span className="text-xl font-bold text-slate-50 tracking-tight">{cfg.label}</span>
+              <span className="text-xs text-slate-500">{cfg.sublabel}</span>
+              {win && (
+                <span
+                  className="text-[10px] font-semibold mt-1.5"
+                  style={{ color: win.available ? '#2dd4bf' : '#334155' }}
+                >
+                  {win.available ? `📅 ${win.label}` : '📅 No free slot'}
+                </span>
+              )}
+            </button>
+          )
+        })}
       </div>
+
+      {/* Calendar status footer */}
+      {cal !== null && (
+        <div className="mt-5 flex items-center justify-center gap-1.5">
+          {cal.connected ? (
+            <>
+              <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#2dd4bf' }} />
+              <span className="text-[11px] text-slate-600">
+                Calendar connected
+                {cal.connectedEmail ? ` · ${cal.connectedEmail}` : ''}
+              </span>
+            </>
+          ) : (
+            <span className="text-[11px] text-slate-700">
+              <a href="/settings" className="text-slate-600 hover:text-slate-400 transition-colors">
+                Connect Google Calendar
+              </a>{' '}to see free/busy slots
+            </span>
+          )}
+        </div>
+      )}
     </div>
   )
 }
