@@ -36,6 +36,18 @@ Analyze the given item and return a JSON object with exactly these fields:
 - entities: array of { entity_type: person|place|company|artist|topic|brand, entity_value: string }
   Only include clearly identifiable entities. Empty array is fine.
 
+- completion_mode: closes | branching | generative
+  closes = clear binary end state (send email, book flight, delete file — task is simply done)
+  branching = outcome changes what comes next (research task where result matters, decision to make)
+  generative = completing it will surface new work (reading article, reviewing a codebase, attending event)
+
+- possible_outcomes: array of 2–3 short outcome labels (max 22 chars each), only if branching; empty array otherwise
+  e.g. ["Found it", "Didn't find it", "Partial"] or ["Yes", "No", "Need more info"]
+
+- follow_up_templates: object keyed by each outcome with array of 1–3 concrete follow-up task titles
+  Only populate if branching; empty object otherwise
+  e.g. {"Found it": ["Add to reference list", "Share with team"], "Didn't find it": ["Try alternative source"]}
+
 - reasoning: 1-sentence explanation of your classification
 
 Rules:

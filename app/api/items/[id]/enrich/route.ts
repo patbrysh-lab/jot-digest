@@ -88,6 +88,11 @@ export async function POST(
       time_sensitivity: enrichment.time_sensitivity,
       importance: enrichment.importance,
       avoidance_score: enrichment.avoidance_score,
+      completion_mode: enrichment.completion_mode ?? 'closes',
+      possible_outcomes: enrichment.possible_outcomes?.length ? enrichment.possible_outcomes : null,
+      follow_up_templates: enrichment.follow_up_templates && Object.keys(enrichment.follow_up_templates).length
+        ? enrichment.follow_up_templates
+        : null,
       state: 'triaged',
     })
     .eq('id', item.id)

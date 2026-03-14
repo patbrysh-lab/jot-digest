@@ -7,6 +7,8 @@ export type ItemSource = 'manual' | 'url' | 'share' | 'voice' | 'screenshot'
 export type EntityType = 'person' | 'place' | 'company' | 'artist' | 'topic' | 'brand'
 export type NextStepStatus = 'active' | 'expired' | 'completed' | 'dismissed'
 export type NextStepType = 'action' | 'explore' | 'consume' | 'develop' | 'none'
+export type ItemCompletionMode = 'closes' | 'branching' | 'generative'
+
 export type ItemRelationship =
   | 'related_to'
   | 'duplicate_of'
@@ -14,6 +16,7 @@ export type ItemRelationship =
   | 'followup_to'
   | 'same_entity_cluster'
   | 'inspired_by'
+  | 'spawned_from_completion'
 
 export interface UrlSummary {
   title: string
@@ -42,6 +45,11 @@ export interface Item {
   avoidance_score: number | null
   url_summary: UrlSummary | null
   source: ItemSource
+  completion_mode: ItemCompletionMode | null
+  completion_outcome: string | null
+  follow_up_generated: boolean
+  possible_outcomes: string[] | null
+  follow_up_templates: Record<string, string[]> | null
   created_at: string
   updated_at: string
 }
@@ -107,6 +115,9 @@ export interface EnrichmentOutput {
     entity_type: EntityType
     entity_value: string
   }>
+  completion_mode: ItemCompletionMode
+  possible_outcomes: string[]
+  follow_up_templates: Record<string, string[]>
   reasoning: string
 }
 
