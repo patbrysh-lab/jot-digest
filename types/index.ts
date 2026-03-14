@@ -17,10 +17,12 @@ export type ItemRelationship =
 
 export interface UrlSummary {
   title: string
-  description: string
-  image: string
+  description: string | null
+  image: string | null
   siteName: string
-  mainText: string
+  mainText: string | null
+  author?: string | null
+  embed_type?: string | null
 }
 
 export interface Item {

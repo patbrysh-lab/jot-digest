@@ -82,7 +82,7 @@ export default function CapturePage() {
       setUrlFetching(true); setUrlError(''); setUrlPreview(null)
       lastFetchedUrl.current = trimmed
       try {
-        const res = await fetch('/api/inbox/fetch-url', {
+        const res = await fetch('/api/url-preview', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url: trimmed }),
@@ -104,12 +104,8 @@ export default function CapturePage() {
 
     const trimmed = text.trim()
     const detectedUrl = isUrl(trimmed) ? trimmed : null
-    const rawText = detectedUrl && urlPreview
-      ? [`URL: ${detectedUrl}`, `Title: ${urlPreview.title}`,
-          urlPreview.description && `Description: ${urlPreview.description}`,
-          urlPreview.mainText && `Content: ${urlPreview.mainText}`]
-          .filter(Boolean).join('\n')
-      : trimmed
+    // For URL items, store the title as raw_text (URL is captured in the url column)
+    const rawText = detectedUrl && urlPreview ? urlPreview.title : trimmed
 
     const { data: item, error } = await supabase
       .from('items')
@@ -210,7 +206,7 @@ export default function CapturePage() {
                 <div className="rounded-xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
                   {urlPreview.image && (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={urlPreview.image} alt="" className="w-full h-24 object-cover opacity-70"
+                    <img src={urlPreview.image} alt="" className="w-full h-28 object-cover opacity-60"
                       onError={e => (e.currentTarget.style.display = 'none')} />
                   )}
                   <div className="px-3 py-2.5">
@@ -218,7 +214,15 @@ export default function CapturePage() {
                     {urlPreview.description && (
                       <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{urlPreview.description}</p>
                     )}
-                    <p className="text-[10px] text-slate-600 mt-1">{urlPreview.siteName}</p>
+                    <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                      <p className="text-[10px] text-slate-600">{urlPreview.siteName}</p>
+                      {urlPreview.author && (
+                        <>
+                          <span className="text-slate-700 text-[10px]">·</span>
+                          <p className="text-[10px] text-slate-600">{urlPreview.author}</p>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
