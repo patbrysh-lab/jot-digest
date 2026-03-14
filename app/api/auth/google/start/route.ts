@@ -43,5 +43,7 @@ export async function GET(request: Request) {
   const response = NextResponse.redirect(oauthUrl)
   response.headers.append('Set-Cookie', `oauth_nonce=${nonce}; ${cookieOpts}`)
   response.headers.append('Set-Cookie', `oauth_uid=${user.id}; ${cookieOpts}`)
+  // Also store the Supabase token so the callback can make an authenticated upsert
+  response.headers.append('Set-Cookie', `oauth_token=${token}; ${cookieOpts}`)
   return response
 }

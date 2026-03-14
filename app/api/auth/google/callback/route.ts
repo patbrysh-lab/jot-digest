@@ -37,12 +37,13 @@ export async function GET(request: Request) {
   }
   const storedNonce = parseCookie('oauth_nonce')
   const storedUid   = parseCookie('oauth_uid')
+  const storedToken = parseCookie('oauth_token')
 
   // CSRF check
   if (!storedNonce || storedNonce !== state) {
     return NextResponse.redirect(`${baseUrl}/settings?error=state_mismatch`)
   }
-  if (!storedUid) {
+  if (!storedUid || !storedToken) {
     return NextResponse.redirect(`${baseUrl}/settings?error=no_session`)
   }
 
@@ -60,10 +61,11 @@ export async function GET(request: Request) {
   // Calculate expiry time
   const tokenExpiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString()
 
-  // Use service-level insert (user_id known from cookie, not from session)
+  // Authenticated client so RLS (auth.uid() = user_id) passes on upsert
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { global: { headers: { Authorization: `Bearer ${storedToken}` } } },
   )
 
   // Upsert — one row per user per provider
@@ -80,10 +82,11 @@ export async function GET(request: Request) {
     { onConflict: 'user_id,provider' }
   )
 
-  // Clear the oauth cookies and redirect to settings
+  // Clear all oauth cookies and redirect to settings
   const clearCookieOpts = 'HttpOnly; SameSite=Lax; Path=/; Max-Age=0'
   const response = NextResponse.redirect(`${baseUrl}/settings?connected=1`)
   response.headers.append('Set-Cookie', `oauth_nonce=; ${clearCookieOpts}`)
   response.headers.append('Set-Cookie', `oauth_uid=; ${clearCookieOpts}`)
+  response.headers.append('Set-Cookie', `oauth_token=; ${clearCookieOpts}`)
   return response
 }
